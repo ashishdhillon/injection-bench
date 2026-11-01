@@ -81,3 +81,10 @@ def test_cli_run_jsonl(tmp_path, capsys):
     text = out.read_text()
     assert "keywords" in text and "length-only" in text and "| detector |" in text
     assert (tmp_path / "rep.json").exists()
+
+
+def test_tfidf_baseline_optional():
+    pytest.importorskip("sklearn")
+    from injectbench.detectors import TfidfLR
+    train, test = temporal_split(rows())
+    assert evaluate(TfidfLR(), train, test, n_boot=20)["auc"] > 0.95

@@ -71,6 +71,32 @@ class HashedLR:
         return [self.b + sum(self.w.get(i, 0.0) * v for i, v in self._feat(t).items()) for t in texts]
 
 
+class TfidfLR:
+    """Stronger classical baseline: word + character n-gram TF-IDF with balanced logistic regression.
+    Needs scikit-learn (pip install injection-bench[sklearn])."""
+    name = "tfidf-lr (word+char)"
+
+    def __init__(self, C: float = 4.0, max_chars: int = 4000):
+        self.C, self.max_chars = C, max_chars
+
+    def fit(self, texts, labels):
+        from scipy.sparse import hstack
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        from sklearn.linear_model import LogisticRegression
+        self._hstack = hstack
+        self.w = TfidfVectorizer(ngram_range=(1, 2), min_df=2, sublinear_tf=True, max_features=200_000)
+        self.c = TfidfVectorizer(analyzer="char_wb", ngram_range=(3, 5), min_df=3, sublinear_tf=True, max_features=300_000)
+        t = [x[: self.max_chars] for x in texts]
+        X = hstack([self.w.fit_transform(t), self.c.fit_transform(t)]).tocsr()
+        self.clf = LogisticRegression(C=self.C, class_weight="balanced", max_iter=1000).fit(X, labels)
+        return self
+
+    def score(self, texts):
+        t = [x[: self.max_chars] for x in texts]
+        X = self._hstack([self.w.transform(t), self.c.transform(t)]).tocsr()
+        return list(self.clf.decision_function(X))
+
+
 class _GuardkitAdapter:
     def __init__(self, mode, model="jailbreak"):
         from guardkit import InjectionGuard    # pip install guardkit
@@ -89,7 +115,7 @@ class _GuardkitAdapter:
 
 
 BUILTIN = {
-    "length": LengthBaseline, "keywords": KeywordBaseline, "hashed-lr": HashedLR,
+    "length": LengthBaseline, "keywords": KeywordBaseline, "hashed-lr": HashedLR, "tfidf-lr": TfidfLR,
     "guardkit:rules": lambda: _GuardkitAdapter("rules"),
     "guardkit:model": lambda: _GuardkitAdapter("model"),
 }

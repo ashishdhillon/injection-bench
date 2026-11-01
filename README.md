@@ -18,9 +18,9 @@ What it does that a quick script usually doesn't:
 ## Quick start
 
 ```bash
-pip install injection-bench
+pip install injection-bench            # add [sklearn] for the tfidf-lr baseline
 injectbench download data/                      # public JailbreakHub CSVs (Shen et al., CCS 2024, MIT)
-injectbench run --data data/ --detector length --detector keywords --detector hashed-lr --out report.md
+injectbench run --data data/ --detector length --detector keywords --detector hashed-lr --detector tfidf-lr --out report.md
 ```
 
 Your own detector:
@@ -50,13 +50,16 @@ prevalence) on the later part. Reproduce with the command above plus `--detector
 |---|---|---|---|---|---|
 | length-only | 0.587 (0.56-0.61) | 0.020 (0.01-0.04) | 0.080 | 0.096 | 0.0 |
 | keywords | 0.653 (0.63-0.68) | 0.053 (0.03-0.07) | 0.214 | 0.217 | 0.04 |
-| hashed-lr (trained on the train split) | 0.742 (0.72-0.77) | 0.113 (0.08-0.16) | 0.264 | 0.373 | 0.5 |
-| guardkit:rules | 0.511 (0.50-0.52) | 0.000 (0.00-0.00) | 0.048 | 0.000 | 0.6 |
-| guardkit:model | 0.739 (0.71-0.76) | 0.118 (0.08-0.18) | 0.261 | 0.383 | 0.8 |
+| hashed-lr (pure Python, trained on the train split) | 0.742 (0.72-0.77) | 0.113 (0.08-0.16) | 0.264 | 0.373 | 0.5 |
+| tfidf-lr (word + char n-grams, scikit-learn) | 0.779 (0.76-0.80) | 0.093 (0.07-0.14) | 0.274 | 0.329 | 2.2 |
+| guardkit:rules | 0.511 (0.50-0.52) | 0.000 (0.00-0.00) | 0.048 | 0.000 | 0.5 |
+| guardkit:model | 0.739 (0.71-0.76) | 0.118 (0.08-0.18) | 0.261 | 0.383 | 0.9 |
 
-Reading it: length alone gives AUC 0.59, so there is a mild shortcut but not a dominant one. Cheap
-bag-of-words detectors reach AUC of about 0.74 and catch only about one in nine jailbreaks at a 1%
-false-positive rate. Regular expressions are close to chance on this data.
+Reading it: length alone gives AUC 0.59, so there is a mild shortcut but not a dominant one. Classical
+bag-of-words detectors plateau at AUC 0.74-0.78 and catch roughly one in ten jailbreaks at a 1%
+false-positive rate; adding character n-grams raises AUC but not low-FPR recall. Regular expressions are close to
+chance on this data. Transformer-based detectors are not included because the benchmark environment could not
+download model weights; adding one is a ten-line adapter (see "Plug in your own detector").
 
 ## Caveats
 

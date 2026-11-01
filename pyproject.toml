@@ -14,7 +14,8 @@ keywords = ["prompt-injection", "jailbreak", "benchmark", "llm", "evaluation", "
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest", "build", "twine"]
+dev = ["pytest", "build", "twine", "scikit-learn"]
+sklearn = ["scikit-learn"]
 
 [project.scripts]
 injectbench = "injectbench.cli:main"

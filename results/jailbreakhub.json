@@ -42,7 +42,7 @@
    0.2588
   ],
   "precision@5%fpr_prev5%": 0.1835,
-  "ms_per_item": 0.039,
+  "ms_per_item": 0.04,
   "name": "keywords"
  },
  {
@@ -65,8 +65,31 @@
    0.3065
   ],
   "precision@5%fpr_prev5%": 0.2173,
-  "ms_per_item": 0.533,
+  "ms_per_item": 0.53,
   "name": "hashed-lr"
+ },
+ {
+  "n_pos": 398,
+  "n_neg": 5105,
+  "auc": 0.7795,
+  "auc_ci95": [
+   0.7554,
+   0.8018
+  ],
+  "recall@1%fpr": 0.093,
+  "recall@1%fpr_ci95": [
+   0.0678,
+   0.1382
+  ],
+  "precision@1%fpr_prev5%": 0.3285,
+  "recall@5%fpr": 0.2739,
+  "recall@5%fpr_ci95": [
+   0.2312,
+   0.3141
+  ],
+  "precision@5%fpr_prev5%": 0.2238,
+  "ms_per_item": 2.21,
+  "name": "tfidf-lr (word+char)"
  },
  {
   "n_pos": 398,
@@ -88,7 +111,7 @@
    0.0729
   ],
   "precision@5%fpr_prev5%": 0.0478,
-  "ms_per_item": 0.644,
+  "ms_per_item": 0.54,
   "name": "guardkit:rules"
  },
  {
@@ -111,7 +134,7 @@
    0.3065
   ],
   "precision@5%fpr_prev5%": 0.2157,
-  "ms_per_item": 0.794,
+  "ms_per_item": 0.929,
   "name": "guardkit:model"
  }
 ]
