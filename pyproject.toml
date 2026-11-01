@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "injection-bench"
+version = "0.1.0"
+description = "Leakage-controlled, time-split benchmark harness for prompt-injection and jailbreak detectors, with shortcut baselines and bootstrap CIs"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Ashish Dhillon" }]
+keywords = ["prompt-injection", "jailbreak", "benchmark", "llm", "evaluation", "guardrails"]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest", "build", "twine"]
+
+[project.scripts]
+injectbench = "injectbench.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/ashishdhillon/injection-bench"
+
+[tool.setuptools]
+packages = ["injectbench"]
