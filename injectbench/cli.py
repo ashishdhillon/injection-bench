@@ -20,7 +20,21 @@ def main(argv=None) -> int:
     r.add_argument("--prevalence", type=float, default=0.05)
     r.add_argument("--boot", type=int, default=200)
     r.add_argument("--out", help="write markdown report here")
+    r.add_argument("--save-scores", help="write raw test scores of every detector to this JSON file")
+    c = sub.add_parser("compare", help="paired comparison of two detectors from --save-scores output")
+    c.add_argument("scores")
+    c.add_argument("--a", required=True)
+    c.add_argument("--b", required=True)
+    c.add_argument("--boot", type=int, default=500)
     a = ap.parse_args(argv)
+    if a.cmd == "compare":
+        from .compare import paired_compare, to_markdown as compare_markdown
+        d = json.load(open(a.scores))
+        for name in (a.a, a.b):
+            if name not in d["scores"]:
+                raise SystemExit(f"detector {name!r} not in {a.scores}; available: {sorted(d['scores'])}")
+        print(compare_markdown(a.a, a.b, paired_compare(d["labels"], d["scores"][a.a], d["scores"][a.b], a.boot)))
+        return 0
     if a.cmd == "download":
         download_jailbreakhub(a.dest)
         print("downloaded to", a.dest)
@@ -29,7 +43,10 @@ def main(argv=None) -> int:
     train, test = temporal_split(rows, a.train_frac)
     info = (f"train {len(train)} ({sum(x.label for x in train)} attacks) | test {len(test)} "
             f"({sum(x.label for x in test)} attacks, {100 * sum(x.label for x in test) / len(test):.1f}% prevalence)")
-    results = [evaluate(load_detector(s), train, test, a.prevalence, a.boot) for s in a.detector]
+    store = {} if a.save_scores else None
+    results = [evaluate(load_detector(s), train, test, a.prevalence, a.boot, store) for s in a.detector]
+    if store is not None:
+        json.dump(store, open(a.save_scores, "w"))
     md = to_markdown(results, info, a.prevalence)
     print(md)
     if a.out:

@@ -53,9 +53,7 @@ injectbench run --data data/ --detector hf:MODEL_ID --detector tfidf-lr --detect
 ```
 
 Candidate model IDs to try (check they are current and read each licence): `protectai/deberta-v3-base-prompt-injection-v2`,
-`meta-llama/Prompt-Guard-86M` (gated). Use a GPU or Colab for the 5,500-prompt test set. **No transformer results
-are included in the table below**: the environment this benchmark was developed in could not download model
-weights, so the adapter is tested with a stub only. Add your own rows and open a pull request.
+`meta-llama/Prompt-Guard-86M` (gated). Use a GPU or Colab for the 5,500-prompt test set. The reference table below includes one pretrained model (DeBERTa-v3 prompt-injection classifier); add your own rows and open a pull request.
 
 ## Reference results
 
@@ -72,12 +70,16 @@ prevalence) on the later part. Reproduce with the command above plus `--detector
 | tfidf-lr (word + char n-grams, scikit-learn) | 0.779 (0.76-0.80) | 0.093 (0.07-0.14) | 0.274 | 0.329 | 2.2 |
 | guardkit:rules | 0.511 (0.50-0.52) | 0.000 (0.00-0.00) | 0.048 | 0.000 | 0.5 |
 | guardkit:model | 0.739 (0.71-0.76) | 0.118 (0.08-0.18) | 0.261 | 0.383 | 0.9 |
+| hf:protectai/deberta-v3-base-prompt-injection-v2 (pretrained, zero-shot*) | 0.751 (0.72-0.78) | 0.090 (0.05-0.13) | 0.344 | 0.323 | 49 |
 
-Reading it: length alone gives AUC 0.59, so there is a mild shortcut but not a dominant one. Classical
-bag-of-words detectors plateau at AUC 0.74-0.78 and catch roughly one in ten jailbreaks at a 1%
-false-positive rate; adding character n-grams raises AUC but not low-FPR recall. Regular expressions are close to
-chance on this data. Transformer-based detectors are not included because the benchmark environment could not
-download model weights; adding one is a ten-line adapter (see "Plug in your own detector").
+\* Pretrained model scored zero-shot on the test split; it was not trained on this notebook's training split and its training data may include similar public prompts, so treat the row as "pretrained, possible overlap". Latency (49 ms/item) was measured on a Colab runtime and is not comparable with the CPU timings of the other rows.
+
+Reading it: length alone gives AUC 0.59, so there is a mild shortcut but not a dominant one. Every learned detector,
+including a pretrained DeBERTa classifier, lands at AUC 0.74-0.78 with overlapping 95% intervals, and catches roughly
+one jailbreak in ten at a 1% false-positive rate. The transformer has the highest recall at 5% FPR (0.34, interval
+0.28-0.39) but its interval overlaps the TF-IDF model's, and it is about 60-100 times slower per item. Regular
+expressions are close to chance on this data. Overlapping unpaired intervals do not prove "no difference": use
+`--save-scores` and `injectbench compare` for paired comparisons.
 
 ## Caveats
 

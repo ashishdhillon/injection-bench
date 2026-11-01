@@ -7,12 +7,17 @@ from .detectors import load_detector
 from .metrics import summarize
 
 
-def evaluate(detector, train: List[Row], test: List[Row], prevalence: float = 0.05, n_boot: int = 200) -> Dict:
+def evaluate(detector, train: List[Row], test: List[Row], prevalence: float = 0.05, n_boot: int = 200,
+             scores_out: Dict = None) -> Dict:
+    """If `scores_out` is a dict, the detector's raw test scores are stored in it (for paired comparisons)."""
     if hasattr(detector, "fit"):
         detector.fit([r.text for r in train], [r.label for r in train])
     t0 = time.time()
     scores = detector.score([r.text for r in test])
     dt = time.time() - t0
+    if scores_out is not None:
+        scores_out["labels"] = [r.label for r in test]
+        scores_out.setdefault("scores", {})[getattr(detector, "name", type(detector).__name__)] = [float(x) for x in scores]
     pos = [s for s, r in zip(scores, test) if r.label == 1]
     neg = [s for s, r in zip(scores, test) if r.label == 0]
     res = summarize(pos, neg, prevalence=prevalence, n_boot=n_boot)

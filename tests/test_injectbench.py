@@ -129,3 +129,31 @@ def test_hf_adapter_runs_through_evaluate(monkeypatch):
     _fake_transformers(monkeypatch, ["benign", "malicious"], lambda t: (0.1, 0.9) if "DAN" in t else (0.8, 0.2))
     train, test = temporal_split(rows())
     assert evaluate(load_detector("hf:m"), train, test, n_boot=20)["auc"] > 0.95
+
+
+def test_save_scores_and_paired_compare(tmp_path, capsys):
+    p = tmp_path / "d.jsonl"
+    p.write_text("\n".join(json.dumps({"text": r.text, "label": r.label, "date": r.date}) for r in rows(600)))
+    sc = tmp_path / "scores.json"
+    assert main(["run", "--data", str(p), "--detector", "keywords", "--detector", "length", "--boot", "20",
+                 "--save-scores", str(sc)]) == 0
+    d = json.loads(sc.read_text())
+    assert set(d["scores"]) == {"keywords", "length-only"} and len(d["labels"]) == len(d["scores"]["keywords"])
+    capsys.readouterr()
+    assert main(["compare", str(sc), "--a", "keywords", "--b", "length-only", "--boot", "50"]) == 0
+    out = capsys.readouterr().out
+    assert "Paired comparison" in out and "auc" in out
+    with pytest.raises(SystemExit):
+        main(["compare", str(sc), "--a", "nope", "--b", "length-only"])
+
+
+def test_paired_compare_detects_real_difference():
+    from injectbench.compare import paired_compare
+    r = random.Random(0)
+    labels = [1] * 200 + [0] * 800
+    good = [r.gauss(2, 1) if y else r.gauss(0, 1) for y in labels]
+    noise = [r.gauss(0, 1) for _ in labels]
+    res = paired_compare(labels, good, noise, n=100)
+    assert res["auc"]["diff"] > 0.3 and res["auc"]["significant"]
+    same = paired_compare(labels, good, good, n=50)
+    assert same["auc"]["diff"] == 0 and not same["auc"]["significant"]

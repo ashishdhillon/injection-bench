@@ -42,7 +42,7 @@
    0.2588
   ],
   "precision@5%fpr_prev5%": 0.1835,
-  "ms_per_item": 0.04,
+  "ms_per_item": 0.052,
   "name": "keywords"
  },
  {
@@ -65,7 +65,7 @@
    0.3065
   ],
   "precision@5%fpr_prev5%": 0.2173,
-  "ms_per_item": 0.53,
+  "ms_per_item": 0.464,
   "name": "hashed-lr"
  },
  {
@@ -88,7 +88,7 @@
    0.3141
   ],
   "precision@5%fpr_prev5%": 0.2238,
-  "ms_per_item": 2.21,
+  "ms_per_item": 2.575,
   "name": "tfidf-lr (word+char)"
  },
  {
@@ -111,7 +111,7 @@
    0.0729
   ],
   "precision@5%fpr_prev5%": 0.0478,
-  "ms_per_item": 0.54,
+  "ms_per_item": 1.419,
   "name": "guardkit:rules"
  },
  {
@@ -134,7 +134,30 @@
    0.3065
   ],
   "precision@5%fpr_prev5%": 0.2157,
-  "ms_per_item": 0.929,
+  "ms_per_item": 0.813,
   "name": "guardkit:model"
+ },
+ {
+  "n_pos": 398,
+  "n_neg": 5105,
+  "auc": 0.7506,
+  "auc_ci95": [
+   0.7242,
+   0.7764
+  ],
+  "recall@1%fpr": 0.0905,
+  "recall@1%fpr_ci95": [
+   0.0528,
+   0.1307
+  ],
+  "precision@1%fpr_prev5%": 0.3225,
+  "recall@5%fpr": 0.3442,
+  "recall@5%fpr_ci95": [
+   0.2814,
+   0.3945
+  ],
+  "precision@5%fpr_prev5%": 0.266,
+  "ms_per_item": 49.42,
+  "name": "hf:protectai/deberta-v3-base-prompt-injection-v2"
  }
 ]
