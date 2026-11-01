@@ -97,6 +97,46 @@ class TfidfLR:
         return list(self.clf.decision_function(X))
 
 
+class HFClassifier:
+    """Hugging Face text-classification model as a detector (a transformer baseline).
+
+    Spec on the command line:  hf:MODEL_ID  or  hf:MODEL_ID#LABEL  to name the positive (attack) label.
+    Needs `pip install injection-bench[hf]` and network access to the model hub. The score is the
+    model's probability for the positive label. No training happens (fit is not defined)."""
+
+    POSITIVE = re.compile(r"inject|jailbreak|malicious|unsafe|attack|adversar|^label_1$|^positive$|^1$", re.I)
+
+    def __init__(self, model_id: str, positive_label: str = None, batch_size: int = 16, max_length: int = 512):
+        from transformers import pipeline          # lazy: heavy optional dependency
+        self.name = f"hf:{model_id}"
+        self.batch_size = batch_size
+        self.pipe = pipeline("text-classification", model=model_id, truncation=True, max_length=max_length, top_k=None)
+        self.positive = positive_label
+        self._resolved = False
+
+    def _positive_label(self, labels):
+        if self.positive:
+            if self.positive not in labels:
+                raise ValueError(f"label {self.positive!r} not in model labels {sorted(labels)}")
+            return self.positive
+        hits = [l for l in labels if self.POSITIVE.search(l)]
+        if len(hits) != 1:
+            raise ValueError(f"cannot tell which label means 'attack' among {sorted(labels)}; use hf:MODEL_ID#LABEL")
+        return hits[0]
+
+    def score(self, texts):
+        out = []
+        for i in range(0, len(texts), self.batch_size):
+            batch = [t for t in texts[i:i + self.batch_size]]
+            for res in self.pipe(batch, batch_size=self.batch_size):
+                by_label = {r["label"]: r["score"] for r in res}
+                if not self._resolved:
+                    self.positive = self._positive_label(by_label)
+                    self._resolved = True
+                out.append(by_label[self.positive])
+        return out
+
+
 class _GuardkitAdapter:
     def __init__(self, mode, model="jailbreak"):
         from guardkit import InjectionGuard    # pip install guardkit
@@ -122,6 +162,9 @@ BUILTIN = {
 
 
 def load_detector(spec: str):
+    if spec.startswith("hf:"):
+        model_id, _, label = spec[3:].partition("#")
+        return HFClassifier(model_id, label or None)
     if spec in BUILTIN:
         return BUILTIN[spec]()
     mod, _, attr = spec.partition(":")

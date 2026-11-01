@@ -39,6 +39,22 @@ injectbench run --data data/ --detector mydet:MyDetector
 
 Your own data: a JSONL file with `text`, `label` (1 = attack) and `date` fields: `--data my.jsonl`.
 
+## Transformer baselines (run locally)
+
+Any Hugging Face text-classification model can be scored as a detector:
+
+```bash
+pip install "injection-bench[hf]"
+injectbench download data/
+injectbench run --data data/ --detector hf:MODEL_ID --detector tfidf-lr --detector length --out report.md
+# if the model's labels are ambiguous, name the attack label:  hf:MODEL_ID#INJECTION
+```
+
+Candidate model IDs to try (check they are current and read each licence): `protectai/deberta-v3-base-prompt-injection-v2`,
+`meta-llama/Prompt-Guard-86M` (gated). Use a GPU or Colab for the 5,500-prompt test set. **No transformer results
+are included in the table below**: the environment this benchmark was developed in could not download model
+weights, so the adapter is tested with a stub only. Add your own rows and open a pull request.
+
 ## Reference results
 
 JailbreakHub in-the-wild prompts, 1,405 jailbreaks and 13,735 regular prompts (rows without a date are

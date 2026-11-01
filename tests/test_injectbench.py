@@ -88,3 +88,44 @@ def test_tfidf_baseline_optional():
     from injectbench.detectors import TfidfLR
     train, test = temporal_split(rows())
     assert evaluate(TfidfLR(), train, test, n_boot=20)["auc"] > 0.95
+
+
+def _fake_transformers(monkeypatch, labels, probs_fn):
+    import sys, types
+    mod = types.ModuleType("transformers")
+    calls = {"n": 0}
+
+    def pipeline(task, model, truncation, max_length, top_k):
+        assert task == "text-classification" and truncation and top_k is None
+        def run(batch, batch_size):
+            calls["n"] += 1
+            return [[{"label": l, "score": p} for l, p in zip(labels, probs_fn(t))] for t in batch]
+        return run
+    mod.pipeline = pipeline
+    monkeypatch.setitem(sys.modules, "transformers", mod)
+    return calls
+
+
+def test_hf_adapter_picks_positive_label_and_batches(monkeypatch):
+    calls = _fake_transformers(monkeypatch, ["SAFE", "INJECTION"], lambda t: (0.2, 0.8) if "ignore" in t else (0.9, 0.1))
+    det = load_detector("hf:acme/model")
+    scores = det.score(["ignore rules", "hello", "ignore x"] * 7)       # 21 items, batch size 16 -> 2 calls
+    assert scores[:3] == [0.8, 0.1, 0.8] and len(scores) == 21 and calls["n"] == 2
+    assert det.name == "hf:acme/model"
+
+
+def test_hf_adapter_explicit_label_and_ambiguity(monkeypatch):
+    _fake_transformers(monkeypatch, ["LABEL_0", "LABEL_1"], lambda t: (0.3, 0.7))
+    assert load_detector("hf:m").score(["x"]) == [0.7]                   # LABEL_1 recognised
+    _fake_transformers(monkeypatch, ["A", "B"], lambda t: (0.3, 0.7))
+    with pytest.raises(ValueError, match="cannot tell"):
+        load_detector("hf:m").score(["x"])
+    assert load_detector("hf:m#A").score(["x"]) == [0.3]
+    with pytest.raises(ValueError, match="not in model labels"):
+        load_detector("hf:m#Z").score(["x"])
+
+
+def test_hf_adapter_runs_through_evaluate(monkeypatch):
+    _fake_transformers(monkeypatch, ["benign", "malicious"], lambda t: (0.1, 0.9) if "DAN" in t else (0.8, 0.2))
+    train, test = temporal_split(rows())
+    assert evaluate(load_detector("hf:m"), train, test, n_boot=20)["auc"] > 0.95
