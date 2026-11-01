@@ -68,4 +68,10 @@ false-positive rate. Regular expressions are close to chance on this data.
 - Pure-Python metrics are fine for thousands of items, not millions. Bootstrap CIs use 200 resamples by default.
 - Reference rows come from one dataset and one split. Do not read them as a ranking of detector families.
 
+## Related projects
+
+- [guardkit](https://github.com/ashishdhillon/guardkit): the detector used for the `guardkit:*` rows above; its
+  technical report (`docs/technical-report.md`) explains why author-written test sets overstate performance.
+- [bharatid](https://github.com/ashishdhillon/bharatid): validators for Indian identifiers.
+
 MIT licensed.
