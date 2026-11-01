@@ -95,7 +95,7 @@ def _fake_transformers(monkeypatch, labels, probs_fn):
     mod = types.ModuleType("transformers")
     calls = {"n": 0}
 
-    def pipeline(task, model, truncation, max_length, top_k):
+    def pipeline(task, model, truncation, max_length, top_k, device):
         assert task == "text-classification" and truncation and top_k is None
         def run(batch, batch_size):
             calls["n"] += 1

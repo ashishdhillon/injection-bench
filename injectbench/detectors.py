@@ -97,6 +97,19 @@ class TfidfLR:
         return list(self.clf.decision_function(X))
 
 
+def _best_device():
+    """GPU (CUDA) if available, then Apple MPS, else CPU (-1). Without this, transformers runs on CPU."""
+    try:
+        import torch
+        if torch.cuda.is_available():
+            return 0
+        if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
+            return "mps"
+    except Exception:
+        pass
+    return -1
+
+
 class HFClassifier:
     """Hugging Face text-classification model as a detector (a transformer baseline).
 
@@ -110,7 +123,8 @@ class HFClassifier:
         from transformers import pipeline          # lazy: heavy optional dependency
         self.name = f"hf:{model_id}"
         self.batch_size = batch_size
-        self.pipe = pipeline("text-classification", model=model_id, truncation=True, max_length=max_length, top_k=None)
+        self.pipe = pipeline("text-classification", model=model_id, truncation=True, max_length=max_length,
+                             top_k=None, device=_best_device())
         self.positive = positive_label
         self._resolved = False
 

@@ -39,9 +39,11 @@ injectbench run --data data/ --detector mydet:MyDetector
 
 Your own data: a JSONL file with `text`, `label` (1 = attack) and `date` fields: `--data my.jsonl`.
 
-## Transformer baselines (run locally)
+## Transformer baselines (run locally or in Colab)
 
-Any Hugging Face text-classification model can be scored as a detector:
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ashishdhillon/injection-bench/blob/main/notebooks/transformer_baseline_colab.ipynb)
+
+The notebook installs everything, downloads the data, runs the baselines plus a transformer, and saves `report.md`. Any Hugging Face text-classification model can be scored as a detector:
 
 ```bash
 pip install "injection-bench[hf]"
